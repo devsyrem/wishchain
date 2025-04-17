@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Wallet, formatWalletAddress, submitDonation } from "@/lib/solana";
+import { Wallet, formatWalletAddress, submitDonation, SOLSCAN_URL } from "@/lib/solana";
 import { WishDisplayData } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,11 +58,38 @@ const DonationDialog = ({ wallet, wish, isOpen, onClose, onSuccess }: DonationDi
         wish.walletAddress,
         donationAmount
       );
-
-      // Show success toast
+      
+      // Get transaction signature from result
+      const txSignature = result?.transaction?.signature;
+      
+      // Determine if this is a real transaction that can be viewed on Solscan
+      const isSolscanViewable = txSignature && 
+        !txSignature.startsWith('SimSig') && 
+        !txSignature.startsWith('sim_');
+      
+      // Create Solscan link for real transactions
+      const solscanLink = isSolscanViewable 
+        ? `${SOLSCAN_URL}/${txSignature}?cluster=devnet` 
+        : null;
+      
+      // Show success toast with link
       toast({
         title: "Donation Successful!",
-        description: `You donated ${donationAmount} SOL to this wish.`,
+        description: (
+          <div>
+            <p>You donated {donationAmount} SOL to this wish.</p>
+            {isSolscanViewable && (
+              <a 
+                href={solscanLink || ""} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="mt-2 inline-flex items-center text-xs text-[#14F195] hover:underline"
+              >
+                View transaction on Solscan.io →
+              </a>
+            )}
+          </div>
+        ),
       });
 
       // Reset form and close dialog

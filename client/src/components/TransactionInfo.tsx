@@ -1,9 +1,17 @@
+import { SOLSCAN_URL } from "@/lib/solana";
+
 interface TransactionInfoProps {
   txId: string | null;
   status: string;
 }
 
 const TransactionInfo = ({ txId, status }: TransactionInfoProps) => {
+  // Determine if transaction can be viewed on Solscan (not simulation mode)
+  const isSolscanViewable = txId && !txId.startsWith('SimSig') && !txId.startsWith('sim_');
+  
+  // Generate Solscan URL if this is a real transaction
+  const solscanLink = isSolscanViewable ? `${SOLSCAN_URL}/${txId}?cluster=devnet` : null;
+  
   return (
     <div className="bg-[#1E1E24] rounded-xl p-6 border border-[#9945FF]/20 shadow-lg">
       <h2 className="text-xl font-semibold mb-4 flex items-center">
@@ -19,6 +27,21 @@ const TransactionInfo = ({ txId, status }: TransactionInfoProps) => {
             <p className="font-mono text-xs truncate text-[#F8F9FA]/90">
               {txId ? txId : "No transactions yet"}
             </p>
+            
+            {/* Solscan.io link */}
+            {isSolscanViewable && (
+              <a 
+                href={solscanLink || ""}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 inline-flex items-center text-xs text-[#14F195] hover:text-[#14F195]/80 transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+                View on Solscan.io
+              </a>
+            )}
           </div>
         </div>
         <div className="rounded-lg bg-[#131418]/50 p-3">

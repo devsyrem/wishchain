@@ -6,6 +6,7 @@ import { WishDisplayData } from '@shared/schema';
 
 // Constants
 const NETWORK = 'devnet';
+export const SOLSCAN_URL = `https://solscan.io/tx`;
 export const solanaConnection = new Connection(clusterApiUrl(NETWORK), 'confirmed');
 
 // Wallet interface
