@@ -60,7 +60,14 @@ export type Wish = typeof wishes.$inferSelect;
 // Common interface for wishes (for UI compatibility with blockchain version)
 export interface WishDisplayData {
   title: string;
-  timestamp: string;
+  timestamp: string; // ISO format string
+  pubkey: string;
+}
+
+// Interface for blockchain-stored wishes
+export interface BlockchainWish {
+  title: string;
+  timestamp: string; // ISO format string
   pubkey: string;
 }
 

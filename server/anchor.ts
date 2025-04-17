@@ -1,7 +1,7 @@
 import * as anchor from '@project-serum/anchor';
 import { Program } from '@project-serum/anchor';
 import { Connection, PublicKey, Keypair, clusterApiUrl } from '@solana/web3.js';
-import { Wish } from '@shared/schema';
+import { BlockchainWish } from '@shared/schema';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -145,7 +145,7 @@ export async function addWish(title: string, walletPublicKey: string): Promise<{
 }
 
 // Get all wishes from the blockchain
-export async function getAllWishes(): Promise<Wish[]> {
+export async function getAllWishes(): Promise<BlockchainWish[]> {
   const program = getProgram();
   const connection = getConnection();
   
@@ -153,7 +153,7 @@ export async function getAllWishes(): Promise<Wish[]> {
   const accounts = await connection.getProgramAccounts(program.programId);
   
   // Parse account data
-  const wishes: Wish[] = [];
+  const wishes: BlockchainWish[] = [];
   
   for (const account of accounts) {
     try {

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { clusterApiUrl, Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { Wish } from '@shared/schema';
+import { WishDisplayData } from '@shared/schema';
 
 // Constants
 const NETWORK = 'devnet';
@@ -116,7 +116,7 @@ export async function submitWish(title: string, walletPublicKey: string): Promis
 
 // WebSocket hook for real-time updates
 export function useWishesWebSocket() {
-  const [wishes, setWishes] = useState<Wish[]>([]);
+  const [wishes, setWishes] = useState<WishDisplayData[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   
