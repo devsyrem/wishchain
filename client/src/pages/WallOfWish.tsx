@@ -46,6 +46,7 @@ const WallOfWish = () => {
               wishes={wishes} 
               isLoading={isLoading} 
               error={error} 
+              wallet={wallet}
             />
           </div>
         </div>

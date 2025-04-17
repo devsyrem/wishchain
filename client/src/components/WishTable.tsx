@@ -1,18 +1,23 @@
 import { useState, useEffect } from "react";
 import { WishDisplayData } from "@shared/schema";
-import { formatWalletAddress } from "@/lib/solana";
+import { Wallet, formatWalletAddress } from "@/lib/solana";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import DonationDialog from "./DonationDialog";
 
 interface WishTableProps {
   wishes: WishDisplayData[];
   isLoading: boolean;
   error: string | null;
+  wallet: Wallet | null;
 }
 
-const WishTable = ({ wishes, isLoading, error }: WishTableProps) => {
+const WishTable = ({ wishes, isLoading, error, wallet }: WishTableProps) => {
   const [displayWishes, setDisplayWishes] = useState<WishDisplayData[]>([]);
+  const [donationDialogOpen, setDonationDialogOpen] = useState<boolean>(false);
+  const [selectedWish, setSelectedWish] = useState<WishDisplayData | null>(null);
   
   // Update displayed wishes when they change
   useEffect(() => {
@@ -23,6 +28,22 @@ const WishTable = ({ wishes, isLoading, error }: WishTableProps) => {
   
   const formatTimestamp = (timestamp: string) => {
     return new Date(timestamp).toLocaleString();
+  };
+  
+  const handleDonateClick = (wish: WishDisplayData) => {
+    if (!wallet?.publicKey) {
+      // User needs to connect wallet first
+      return;
+    }
+    
+    setSelectedWish(wish);
+    setDonationDialogOpen(true);
+  };
+  
+  const handleDonationSuccess = () => {
+    // The WebSocket will update the wishes automatically with new donation counts
+    setDonationDialogOpen(false);
+    setSelectedWish(null);
   };
   
   return (
@@ -66,6 +87,7 @@ const WishTable = ({ wishes, isLoading, error }: WishTableProps) => {
               <TableHead className="text-left text-xs font-medium text-[#F8F9FA]/70 uppercase tracking-wider">Wish</TableHead>
               <TableHead className="text-left text-xs font-medium text-[#F8F9FA]/70 uppercase tracking-wider">Timestamp</TableHead>
               <TableHead className="text-left text-xs font-medium text-[#F8F9FA]/70 uppercase tracking-wider">Address (PDA)</TableHead>
+              <TableHead className="text-left text-xs font-medium text-[#F8F9FA]/70 uppercase tracking-wider">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -82,11 +104,14 @@ const WishTable = ({ wishes, isLoading, error }: WishTableProps) => {
                   <TableCell className="py-4">
                     <Skeleton className="h-4 w-48" />
                   </TableCell>
+                  <TableCell className="py-4">
+                    <Skeleton className="h-8 w-24" />
+                  </TableCell>
                 </TableRow>
               ))
             ) : error ? (
               <TableRow>
-                <TableCell colSpan={3} className="py-8 text-center text-red-400">
+                <TableCell colSpan={4} className="py-8 text-center text-red-400">
                   Error loading wishes: {error}
                 </TableCell>
               </TableRow>
@@ -94,7 +119,14 @@ const WishTable = ({ wishes, isLoading, error }: WishTableProps) => {
               displayWishes.map((wish, index) => (
                 <TableRow key={`${wish.pubkey}-${index}`} className="hover:bg-[#9945FF]/5 transition">
                   <TableCell className="px-4 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium">{wish.title}</div>
+                    <div className="flex items-center">
+                      <div className="text-sm font-medium">{wish.title}</div>
+                      {wish.totalDonations && wish.totalDonations > 0 && (
+                        <Badge variant="outline" className="ml-2 bg-[#14F195]/10 text-[#14F195] border-[#14F195]/20 hover:bg-[#14F195]/20">
+                          {wish.totalDonations} {wish.totalDonations === 1 ? 'donation' : 'donations'}
+                        </Badge>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell className="px-4 py-4 whitespace-nowrap">
                     <div className="text-sm text-[#F8F9FA]/70">{formatTimestamp(wish.timestamp)}</div>
@@ -104,11 +136,30 @@ const WishTable = ({ wishes, isLoading, error }: WishTableProps) => {
                       {wish.pubkey}
                     </div>
                   </TableCell>
+                  <TableCell className="px-4 py-4 whitespace-nowrap">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDonateClick(wish)}
+                      disabled={!wallet?.publicKey || !wish.walletAddress}
+                      className={`${
+                        wallet?.publicKey && wish.walletAddress
+                          ? 'bg-gradient-to-r from-[#9945FF]/10 to-[#14F195]/10 border-[#9945FF]/20 hover:bg-[#9945FF]/20'
+                          : 'bg-[#1E1E24] border-[#9945FF]/10 opacity-50 cursor-not-allowed'
+                      }`}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-[#14F195]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                      </svg>
+                      Donate SOL
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={3}>
+                <TableCell colSpan={4}>
                   <div className="text-center py-12">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-[#9945FF]/50 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
@@ -124,6 +175,15 @@ const WishTable = ({ wishes, isLoading, error }: WishTableProps) => {
           </TableBody>
         </Table>
       </div>
+      
+      {/* Donation Dialog */}
+      <DonationDialog
+        wallet={wallet}
+        wish={selectedWish}
+        isOpen={donationDialogOpen}
+        onClose={() => setDonationDialogOpen(false)}
+        onSuccess={handleDonationSuccess}
+      />
     </div>
   );
 };

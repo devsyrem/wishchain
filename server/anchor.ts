@@ -219,9 +219,11 @@ export async function transferSol(
     // This is just for demonstration purposes
     // Using AnchorProvider's method, which we know exists since we created it
     const anchorProvider = provider as anchor.AnchorProvider;
+    // Get the keypair that we're using as the payer
+    const payer = (anchorProvider.wallet as any).payer;
     const signature = await anchorProvider.connection.sendTransaction(
       transaction, 
-      [anchorProvider.wallet.payer]
+      [payer]
     );
     
     return { signature: signature.toString() };
