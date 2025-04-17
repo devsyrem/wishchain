@@ -1,6 +1,14 @@
 import * as anchor from '@project-serum/anchor';
 import { Program } from '@project-serum/anchor';
-import { Connection, PublicKey, Keypair, clusterApiUrl } from '@solana/web3.js';
+import { 
+  Connection, 
+  PublicKey, 
+  Keypair, 
+  clusterApiUrl, 
+  Transaction, 
+  SystemProgram, 
+  LAMPORTS_PER_SOL 
+} from '@solana/web3.js';
 import { BlockchainWish } from '@shared/schema';
 import fs from 'fs';
 import path from 'path';
@@ -172,4 +180,53 @@ export async function getAllWishes(): Promise<BlockchainWish[]> {
   wishes.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   
   return wishes;
+}
+
+// Transfer SOL from one wallet to another (donation)
+export async function transferSol(
+  senderWalletAddress: string,
+  recipientWalletAddress: string,
+  amountInLamports: number
+): Promise<{ signature: string }> {
+  // In a real application, the client would sign this transaction
+  // For development/simulation, we'll use our payer account
+  const connection = getConnection();
+  const provider = getProvider();
+  
+  try {
+    // Create a simulation mode with fake transaction for development
+    if (process.env.NODE_ENV === 'development') {
+      // Generate a simulated transaction signature
+      const simulatedSignature = 'sim_donation_' + Math.random().toString(36).substring(2, 15);
+      
+      // Log the simulated donation
+      console.log(`[SIMULATED DONATION] From: ${senderWalletAddress} To: ${recipientWalletAddress} Amount: ${amountInLamports / LAMPORTS_PER_SOL} SOL`);
+      
+      // Return the simulated signature
+      return { signature: simulatedSignature };
+    }
+    
+    // For production: Create a new transaction
+    const transaction = new Transaction().add(
+      SystemProgram.transfer({
+        fromPubkey: new PublicKey(senderWalletAddress),
+        toPubkey: new PublicKey(recipientWalletAddress),
+        lamports: amountInLamports,
+      })
+    );
+    
+    // Note: In a real app, the frontend would sign this transaction
+    // This is just for demonstration purposes
+    // Using AnchorProvider's method, which we know exists since we created it
+    const anchorProvider = provider as anchor.AnchorProvider;
+    const signature = await anchorProvider.connection.sendTransaction(
+      transaction, 
+      [anchorProvider.wallet.payer]
+    );
+    
+    return { signature: signature.toString() };
+  } catch (error) {
+    console.error('Error transferring SOL:', error);
+    throw error;
+  }
 }

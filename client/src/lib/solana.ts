@@ -175,3 +175,32 @@ export function formatWalletAddress(address: string | null): string {
   if (!address) return 'Not Connected';
   return `${address.slice(0, 4)}...${address.slice(-4)}`;
 }
+
+// Submit a donation to a wish
+export async function submitDonation(
+  wishId: number,
+  walletPublicKey: string,
+  recipientWalletAddress: string,
+  amount: number
+): Promise<{ success: boolean, transaction: { signature: string } }> {
+  if (!wishId || !walletPublicKey || !recipientWalletAddress || !amount) {
+    throw new Error('All donation parameters are required');
+  }
+  
+  // Convert SOL to lamports (smallest unit in Solana)
+  const amountInLamports = amount * LAMPORTS_PER_SOL;
+  
+  // Call API to process donation
+  const response = await apiRequest(
+    'POST', 
+    '/api/donations', 
+    { 
+      wishId, 
+      walletPublicKey, 
+      recipientWalletAddress,
+      amount: amountInLamports
+    }
+  );
+  
+  return await response.json();
+}

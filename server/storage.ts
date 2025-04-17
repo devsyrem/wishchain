@@ -53,8 +53,8 @@ export class DatabaseStorage implements IStorage {
       title: wish.title,
       timestamp: wish.timestamp.toISOString(),
       pubkey: wish.pubkey || "",
-      walletAddress: wish.walletAddress,
-      signature: wish.signature,
+      walletAddress: wish.walletAddress || undefined,
+      signature: wish.signature || undefined,
       totalDonations: wish.totalDonations || 0
     }));
   }
