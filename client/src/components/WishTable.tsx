@@ -176,14 +176,16 @@ const WishTable = ({ wishes, isLoading, error, wallet }: WishTableProps) => {
         </Table>
       </div>
       
-      {/* Donation Dialog */}
-      <DonationDialog
-        wallet={wallet}
-        wish={selectedWish}
-        isOpen={donationDialogOpen}
-        onClose={() => setDonationDialogOpen(false)}
-        onSuccess={handleDonationSuccess}
-      />
+      {/* Only render the dialog when needed */}
+      {donationDialogOpen && (
+        <DonationDialog
+          wallet={wallet}
+          wish={selectedWish}
+          isOpen={donationDialogOpen}
+          onClose={() => setDonationDialogOpen(false)}
+          onSuccess={handleDonationSuccess}
+        />
+      )}
     </div>
   );
 };
