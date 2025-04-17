@@ -123,77 +123,42 @@ export function useWishesWebSocket() {
   useEffect(() => {
     setIsLoading(true);
     
-    // For demo purposes, we'll use simulation data
-    const isSimulationMode = true;
+    // Create WebSocket connection for real data
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    const ws = new WebSocket(wsUrl);
     
-    if (isSimulationMode) {
-      // Create some sample wishes for the demo
-      const sampleWishes: Wish[] = [
-        {
-          title: "I wish for world peace",
-          timestamp: new Date().toISOString(),
-          pubkey: "5FHt7HA9B5mXRfUTpuFnHKruJc6h3TMuSMKbePBEzBdK"
-        },
-        {
-          title: "I wish to learn Solana development",
-          timestamp: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
-          pubkey: "9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin"
-        },
-        {
-          title: "I wish for more decentralized applications",
-          timestamp: new Date(Date.now() - 7200000).toISOString(), // 2 hours ago
-          pubkey: "EchZANvdXd3VmfPz8qSLVXABDd3KzptQQtLzB152dXnH"
-        }
-      ];
-      
-      // Simulate loading delay
-      setTimeout(() => {
-        setWishes(sampleWishes);
-        setIsLoading(false);
-      }, 1000);
-      
-      // Return cleanup function
-      return () => {
-        // No cleanup needed for simulation
-      };
-    } else {
-      // Create WebSocket connection for real data
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/ws`; // Use the specific WebSocket path
-      const ws = new WebSocket(wsUrl);
-      
-      ws.onopen = () => {
-        console.log('WebSocket connection established');
-      };
-      
-      ws.onmessage = (event) => {
-        try {
-          const message = JSON.parse(event.data);
-          
-          if (message.type === 'WISHES_LIST') {
-            setWishes(message.data);
-            setIsLoading(false);
-          }
-        } catch (err) {
-          setError('Failed to parse WebSocket message');
+    ws.onopen = () => {
+      console.log('WebSocket connection established');
+    };
+    
+    ws.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        
+        if (message.type === 'WISHES_LIST') {
+          setWishes(message.data);
           setIsLoading(false);
         }
-      };
-      
-      ws.onerror = (event) => {
-        setError('WebSocket error occurred');
+      } catch (err) {
+        setError('Failed to parse WebSocket message');
         setIsLoading(false);
-      };
-      
-      ws.onclose = () => {
-        console.log('WebSocket connection closed');
-      };
-      
-      // Clean up WebSocket connection
-      return () => {
-        ws.close();
-      };
-    }
+      }
+    };
+    
+    ws.onerror = () => {
+      setError('WebSocket error occurred');
+      setIsLoading(false);
+    };
+    
+    ws.onclose = () => {
+      console.log('WebSocket connection closed');
+    };
+    
+    // Clean up WebSocket connection
+    return () => {
+      ws.close();
+    };
   }, []);
   
   return { wishes, isLoading, error };
