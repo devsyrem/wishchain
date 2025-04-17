@@ -1,4 +1,4 @@
-import { users, wishes, type User, type InsertUser, type InsertWish, type Wish, type WishDisplayData } from "@shared/schema";
+import { users, wishes, donations, type User, type InsertUser, type InsertWish, type Wish, type WishDisplayData, type InsertDonation, type Donation } from "@shared/schema";
 import { eq, desc } from "drizzle-orm";
 import { db } from "./db";
 
@@ -14,6 +14,12 @@ export interface IStorage {
   getWishById(id: number): Promise<Wish | undefined>;
   createWish(wish: InsertWish): Promise<Wish>;
   updateWishStatus(id: number, status: string): Promise<Wish | undefined>;
+  
+  // Donation operations
+  createDonation(donation: InsertDonation): Promise<Donation>;
+  getDonationsByWishId(wishId: number): Promise<Donation[]>;
+  updateDonationStatus(id: number, status: string): Promise<Donation | undefined>;
+  incrementWishDonations(wishId: number): Promise<Wish | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -43,9 +49,13 @@ export class DatabaseStorage implements IStorage {
     const dbWishes = await db.select().from(wishes).orderBy(desc(wishes.timestamp));
     
     return dbWishes.map(wish => ({
+      id: wish.id,
       title: wish.title,
       timestamp: wish.timestamp.toISOString(),
-      pubkey: wish.pubkey || ""
+      pubkey: wish.pubkey || "",
+      walletAddress: wish.walletAddress,
+      signature: wish.signature,
+      totalDonations: wish.totalDonations || 0
     }));
   }
   
@@ -65,6 +75,43 @@ export class DatabaseStorage implements IStorage {
       .set({ status })
       .where(eq(wishes.id, id))
       .returning();
+    return updatedWish;
+  }
+  
+  // Donation operations
+  async createDonation(donation: InsertDonation): Promise<Donation> {
+    const [createdDonation] = await db.insert(donations).values(donation).returning();
+    return createdDonation;
+  }
+  
+  async getDonationsByWishId(wishId: number): Promise<Donation[]> {
+    return await db.select()
+      .from(donations)
+      .where(eq(donations.wishId, wishId))
+      .orderBy(desc(donations.timestamp));
+  }
+  
+  async updateDonationStatus(id: number, status: string): Promise<Donation | undefined> {
+    const [updatedDonation] = await db
+      .update(donations)
+      .set({ status })
+      .where(eq(donations.id, id))
+      .returning();
+    return updatedDonation;
+  }
+  
+  async incrementWishDonations(wishId: number): Promise<Wish | undefined> {
+    const wish = await this.getWishById(wishId);
+    if (!wish) return undefined;
+    
+    const currentDonations = wish.totalDonations || 0;
+    
+    const [updatedWish] = await db
+      .update(wishes)
+      .set({ totalDonations: currentDonations + 1 })
+      .where(eq(wishes.id, wishId))
+      .returning();
+    
     return updatedWish;
   }
 }
