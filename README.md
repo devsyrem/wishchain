@@ -1,7 +1,11 @@
 
 # Wall of Wish
 
-A decentralized wishing wall built on the Solana blockchain where users can post wishes and make donations. The application combines Web2 and Web3 technologies, using both blockchain storage for immutability and a traditional database for faster queries.
+A decentralized wishing wall built on the Solana blockchain where users can post wishes and make donations.
+
+![Wall of Wish Interface](attached_assets/image_1744894157046.png)
+
+The application combines Web2 and Web3 technologies, using both blockchain storage for immutability and a traditional database for faster queries.
 
 ## Features
 
