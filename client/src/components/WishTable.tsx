@@ -1,18 +1,18 @@
 import { useState, useEffect } from "react";
-import { Wish } from "@shared/schema";
+import { WishDisplayData } from "@shared/schema";
 import { formatWalletAddress } from "@/lib/solana";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface WishTableProps {
-  wishes: Wish[];
+  wishes: WishDisplayData[];
   isLoading: boolean;
   error: string | null;
 }
 
 const WishTable = ({ wishes, isLoading, error }: WishTableProps) => {
-  const [displayWishes, setDisplayWishes] = useState<Wish[]>([]);
+  const [displayWishes, setDisplayWishes] = useState<WishDisplayData[]>([]);
   
   // Update displayed wishes when they change
   useEffect(() => {
